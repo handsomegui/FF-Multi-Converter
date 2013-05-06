@@ -466,6 +466,7 @@ class MainWindow(QMainWindow):
         tab = self.current_tab()
         cmd = ''
         size = str('')
+        mntaspect = False
 
         if tab.name == 'AudioVideo':
             cmd = tab.commandLineEdit.text()
@@ -474,10 +475,12 @@ class MainWindow(QMainWindow):
             if width:
                 height = tab.heightLineEdit.text()
                 size = str('{0}x{1}'.format(width, height))
+                mntaspect = tab.aspectCheckBox.isChecked()
         else:
             self.docconv = True
 
-        dialog = progress.Progress(_list, tab.name, cmd, self.ffmpeg, size,
+        dialog = progress.Progress(_list, tab.name, cmd,
+                                   not self.avconv_prefered, size, mntaspect,
                                    self.deleteCheckBox.isChecked(), self)
         dialog.show()
 
@@ -547,7 +550,8 @@ class MainWindow(QMainWindow):
                        ['[de_DE] German (Germany)', 'Stefan Wilhelm'],
                        ['[el] Greek', 'Ilias Stamatis'],
                        ['[hu] Hungarian', 'Farkas Norbert'],
-                       ['[pl_PL] Polish (Poland)', 'Lukasz Koszy'],
+                       ['[pl_PL] Polish (Poland)', 'Lukasz Koszy'
+                                    '\n     Piotr Surdacki'],
                        ['[pt] Portuguese', 'Sérgio Marques'],
                        ['[pt_BR] Portuguese (Brasil)', 'José Humberto A Melo'],
                        ['[ru] Russian', 'Andrew Lapshin'],
@@ -894,17 +898,21 @@ class ImageTab(QWidget):
         hlayout1 = pyqttools.add_to_layout(QHBoxLayout(), converttoLabel,
                                            self.extComboBox, None)
 
-        sizeLabel = QLabel(self.tr('Image Size:'))
+        sizeLabel = QLabel('<html><p align="center">' +
+                           self.tr('Image Size:') + '</p></html>')
         self.widthLineEdit = pyqttools.create_LineEdit((50, 16777215),
                                                        validator, 4)
         self.heightLineEdit = pyqttools.create_LineEdit((50, 16777215),
                                                         validator,4)
         label = QLabel('x')
         label.setMaximumWidth(25)
-        hlayout2 = pyqttools.add_to_layout(QHBoxLayout(), sizeLabel,
-                                           self.widthLineEdit, label,
-                                           self.heightLineEdit, None)
-        final_layout = pyqttools.add_to_layout(QVBoxLayout(),hlayout1,hlayout2)
+        self.aspectCheckBox = QCheckBox(self.tr("Maintain aspect ratio"))
+        hlayout2 = pyqttools.add_to_layout(QHBoxLayout(), self.widthLineEdit,
+                                           label, self.heightLineEdit)
+        vlayout = pyqttools.add_to_layout(QVBoxLayout(), sizeLabel, hlayout2)
+        hlayout3 = pyqttools.add_to_layout(QHBoxLayout(), vlayout,
+                                           self.aspectCheckBox, None)
+        final_layout = pyqttools.add_to_layout(QVBoxLayout(),hlayout1,hlayout3)
         self.setLayout(final_layout)
 
     def clear(self):
@@ -973,7 +981,7 @@ class DocumentTab(QWidget):
         flist = []
         for i in self.formats:
             for y in self.formats[i]:
-                flist.append(i + ' to ' + y)
+                flist.append(self.tr('%1 to %2').arg(i, y))
         flist.sort()
 
         convertLabel = QLabel(self.tr('Convert:'))
